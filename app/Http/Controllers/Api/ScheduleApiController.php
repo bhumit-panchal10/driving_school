@@ -258,10 +258,10 @@ class ScheduleApiController extends Controller
 
         $request->validate(
             [
-
-                "fromtime" => '',
-                "Totime" => '',
-                "Schedule_id" => 'required',
+                
+            "fromtime" => '',
+            "Totime" => '',
+            "Schedule_id" => 'required',
 
             ]
         );

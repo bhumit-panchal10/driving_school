@@ -989,23 +989,21 @@ class SchoolOwnerApiController extends Controller
             'customer_id' => 'required',
             'driver_id' => 'required',
             'package_order_id' => 'required',
-
-
-
         ]);
+       
 
         $startdate = Carbon::today(); // Get today's date
         $enddate = (clone $startdate)->addDays($request->session - 1)->toDateString(); // Clone before modification
-
+      
         try {
-            DB::beginTransaction();
+           // DB::beginTransaction();
             $updated = Schedule::where('SchoolId', $request->SchoolId)
                 ->where('fromtime', $request->fromtime)
                 ->where('Totime', $request->Totime)
                 ->where('car_id', $request->car_id)
                 ->whereBetween('Schedule_date', [$startdate->toDateString(), $enddate]) // Correct whereBetween usage
                 ->update(['driver_id' => $request->driver_id, 'package_order_id' => $request->package_order_id, 'Customer_id' => $request->customer_id]);
-            //dd($myorders);
+          
 
             // Check if there are no orders
             if ($updated == 0) {
@@ -1015,10 +1013,10 @@ class SchoolOwnerApiController extends Controller
                     'success' => false,
                 ], 404);
             }
-            Packageorder::where('customer_id', $request->customer_id)
+            Packageorder::where('package_order_id', $request->package_order_id)
                 ->update(['is_schedule' => 1]);
 
-            DB::commit();
+            //DB::commit();
             return response()->json([
                 'message' => 'Driver assigned successfully!',
                 'success' => true,

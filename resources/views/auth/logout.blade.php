@@ -4,8 +4,8 @@
     <div class="mb-0 w-screen lg:w-[500px] card shadow-lg border-none shadow-slate-100 relative">
         <div class="!px-10 !py-12 card-body">
             <a href="#!">
-                <img src="{{ asset('assets/images/logo.png') }}" alt="" class="hidden mx-auto dark:block">
-                <img src="{{ asset('assets/images/logo.png') }}" alt="" class="block mx-auto dark:hidden">
+                <img src="{{ asset('assets/images/new.png') }}" alt="" class="hidden mx-auto dark:block">
+                <img src="{{ asset('assets/images/new.png') }}" alt="" class="block mx-auto dark:hidden">
             </a>
             <div class="mt-8 text-center">
                 <div class="mb-4 text-center">
