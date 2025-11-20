@@ -57,6 +57,9 @@ class CustomerController extends Controller
                 ->select('drivingschool.*', 'Schedule.*')
                 ->whereNotNull('drivingschool.latitude')
                 ->whereNotNull('drivingschool.longitude')
+                ->when(!empty($request->schoolname), function ($query) use ($request) {
+                    $query->where('drivingschool.name', 'LIKE', '%' . $request->schoolname . '%');
+                })
                 ->when(!empty($starttime) || !empty($endtime), function ($query) use ($starttime, $endtime) {
                     if (!empty($starttime) && !empty($endtime)) {
                         // Fix for crossing midnight
@@ -88,7 +91,7 @@ class CustomerController extends Controller
                     }
                 })
                 ->get();
-            //dd($schools);
+            // dd($schools);
 
             if ($schools->isEmpty()) {
                 return response()->json(['message' => 'No schools found before distance calculation'], 404);
@@ -930,6 +933,7 @@ class CustomerController extends Controller
             ])
                 ->where('customer_id', $request->Customer_id)
                 ->whereIn('is_schedule', [0, 1])
+                ->orderBy('package_order_id', 'DESC') 
                 ->get();
             //dd($mybooking);
 
