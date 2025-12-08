@@ -533,16 +533,33 @@ class CustomerController extends Controller
             $startdate = $request->Schedule_date;
             // Dynamically add days based on total_session
             $endDate = Carbon::parse($startdate)->addDays($request->total_session)->format('Y-m-d');
+            
+            // 1️⃣ Check if any date is already booked → FAIL
+            $alreadyBooked = Schedule::where('car_id', $request->car_id)
+                ->where('SchoolId', $request->SchoolId)
+                ->whereBetween('Schedule_date', [$startdate, $endDate])
+                ->whereTime('fromtime', '<=', $fromTime)
+                ->whereTime('Totime', '>=', $toTime)
+                ->where('Customer_id', '>', 0)
+                ->exists();
+             
+            
+            if ($alreadyBooked) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Some sessions in the selected date range are already booked.',
+                ], 400);
+            }
 
             // Count sessions within the given date range
             $availableSessions = Schedule::where('car_id', $request->car_id)
                 ->where('SchoolId', $request->SchoolId)
                 ->whereBetween('Schedule_date', [$startdate, $endDate])
-                ->whereTime('fromtime', '<=', $toTime)
-                ->whereTime('Totime', '>=', $fromTime)
+                ->whereTime('fromtime', '<=', $fromTime)
+                ->whereTime('Totime', '>=', $toTime)
                 ->where('Customer_id', 0)
                 ->count();
-            //dd($availableSessions);
+           
             // Debugging: Check count
             //Log::info("Available sessions: " . $availableSessions);
 
@@ -933,6 +950,7 @@ class CustomerController extends Controller
             ])
                 ->where('customer_id', $request->Customer_id)
                 ->whereIn('is_schedule', [0, 1])
+                ->whereIn('isPayment', [0, 1])
                 ->orderBy('package_order_id', 'DESC') 
                 ->get();
             //dd($mybooking);
