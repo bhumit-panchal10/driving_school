@@ -899,6 +899,7 @@ class SchoolOwnerApiController extends Controller
             $myorders = Packageorder::with('carname', 'package', 'schedulemaster')
                 ->where('SchoolId', $request->SchoolId)
                 ->whereIn('is_schedule', [0])
+                ->whereIn('isPayment', [0,1])
                 ->get();
             //dd($myorders);
             $myorder = [];

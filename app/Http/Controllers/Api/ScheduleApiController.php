@@ -114,64 +114,90 @@ class ScheduleApiController extends Controller
         }
     }
 
-    public function ScheduleAdd(Request $request)
-    {
-        try {
-            // Validate request
-            $request->validate([
-                'Customer_id' => 'nullable|integer',
-                'driver_id' => 'nullable|integer',
-                'car_id' => 'required|integer',
-                'SchoolId' => 'required|integer',
-                'fromtime' => 'required|date_format:H:i:s',
-                'Totime' => 'required|date_format:H:i:s',
-            ]);
+   public function ScheduleAdd(Request $request)
+   {
+    try {
+        // Validate request
+        $request->validate([
+            'Customer_id' => 'nullable|integer',
+            'driver_id' => 'nullable|integer',
+            'car_id' => 'required|integer',
+            'SchoolId' => 'required|integer',
+            'fromtime' => 'required|date_format:H:i:s',
+            'Totime' => 'required|date_format:H:i:s',
+        ]);
 
-            // Set start date as current date
-            $startDate = Carbon::now()->startOfDay();
-            $endDate = $startDate->copy()->addDays(90);
+        // Set start date as current date
+        $startDate = Carbon::now()->startOfDay();
+        $endDate = $startDate->copy()->addDays(90);
 
-            // Create ScheduleMaster entry
-            $ScheduleMaster = ScheduleMaster::create([
-                'SchoolId' => $request->SchoolId,
+        // Generate 90-day date range
+        $period = CarbonPeriod::create($startDate, $endDate);
+
+        // ---------------------------------------------
+        // 🚫 CHECK IF TIME SLOT ALREADY EXISTS
+        // ---------------------------------------------
+        $exists = Schedule::where('car_id', $request->car_id)
+            ->where('SchoolId', $request->SchoolId)
+            ->whereIn('Schedule_date', collect($period)->map(fn($d) => $d->format('Y-m-d')))
+            ->where(function ($q) use ($request) {
+                $q->where(function ($query) use ($request) {
+                    $query->where('fromtime', '<', $request->Totime)
+                          ->where('Totime', '>', $request->fromtime);
+                });
+            })
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This car is already scheduled for the selected time.',
+            ], 400);
+        }
+
+        // ---------------------------------------------
+        // ✔ CREATE MASTER ENTRY
+        // ---------------------------------------------
+        $ScheduleMaster = ScheduleMaster::create([
+            'SchoolId' => $request->SchoolId,
+            'car_id' => $request->car_id,
+            'fromtime' => $request->fromtime,
+            'Totime' => $request->Totime,
+            'strIP' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
+        // ---------------------------------------------
+        // ✔ INSERT 90 DAYS SCHEDULE
+        // ---------------------------------------------
+        foreach ($period as $date) {
+            Schedule::create([
+                'Customer_id' => $request->Customer_id ?? 0,
+                'driver_id' => $request->driver_id,
                 'car_id' => $request->car_id,
+                'SchoolId' => $request->SchoolId,
                 'fromtime' => $request->fromtime,
                 'Totime' => $request->Totime,
+                'Schedule_date' => $date->format('Y-m-d'),
+                'Schedulemasterid' => $ScheduleMaster->Schedule_master_id,
                 'strIP' => $request->ip(),
                 'created_at' => now(),
             ]);
-
-            // Generate 90-day period
-            $period = CarbonPeriod::create($startDate, $endDate);
-
-            foreach ($period as $date) {
-                Schedule::create([
-                    'Customer_id' => $request->Customer_id ?? 0,
-                    'driver_id' => $request->driver_id,
-                    'car_id' => $request->car_id,
-                    'SchoolId' => $request->SchoolId,
-                    //'fromdate' => $date->format('Y-m-d'),
-                    //'Todate' => $date->format('Y-m-d'),
-                    'fromtime' => $request->fromtime,
-                    'Totime' => $request->Totime,
-                    'Schedule_date' => $date->format('Y-m-d'),
-                    'Schedulemasterid' => $ScheduleMaster->Schedule_master_id,
-                    'strIP' => $request->ip(),
-                    'created_at' => now(),
-                ]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Schedules created successfully.',
-            ], 201);
-        } catch (\Throwable $th) {
-            return response()->json([
-                'success' => false,
-                'error' => $th->getMessage(),
-            ], 500);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Schedules created successfully.',
+        ], 201);
+
+    } catch (\Throwable $th) {
+        return response()->json([
+            'success' => false,
+            'error' => $th->getMessage(),
+        ], 500);
     }
+}
+
 
 
     public function ScheduleList(Request $request)
