@@ -28,6 +28,9 @@ Route::get('/clear-cache', function () {
 //vendor api
 Route::post('/schoolowner-registration', [SchoolOwnerApiController::class, 'schoolowner_new_registration'])->name('schoolowner_new_registration');
 Route::post('/login', [SchoolOwnerApiController::class, 'login']);
+
+Route::post('/DriverAssigncheck', [SchoolOwnerApiController::class, 'DriverAssigncheck']);
+
 Route::post('/verifyOTP', [SchoolOwnerApiController::class, 'verifyOTP'])->name('verifyOTP');
 Route::post('/schoolowner/change/password', [SchoolOwnerApiController::class, 'change_password'])->name('change_password');
 Route::post('/generate-image', [SchoolOwnerApiController::class, 'generateImage'])->name('generateImage');

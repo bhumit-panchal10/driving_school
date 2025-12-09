@@ -4,13 +4,13 @@
     <div class="mb-0 w-screen lg:w-[500px] card shadow-lg border-none shadow-slate-100 relative">
         <div class="!px-10 !py-12 card-body">
             <a href="#!">
-                <img src="{{ asset('assets/images/new.png') }}" alt="" class="hidden mx-auto dark:block">
-                <img src="{{ asset('assets/images/new.png') }}" alt="" class="block mx-auto dark:hidden">
+                <img src="{{ asset('assets/images/logo.png') }}" alt="" class="hidden mx-auto dark:block"  style="height:95px">
+                <img src="{{ asset('assets/images/logo.png') }}" alt="" class="block mx-auto dark:hidden"  style="height:95px">
             </a>
             <div class="mt-8 text-center">
-                <div class="mb-4 text-center">
-                    <i data-lucide="log-out" class="mx-auto text-purple-500 size-6 fill-purple-100"></i>
-                </div>
+                <!--<div class="mb-4 text-center">-->
+                <!--    <i data-lucide="log-out" class="mx-auto text-purple-500 size-6 fill-purple-100"></i>-->
+                <!--</div>-->
                 <h4 class="mb-2 text-custom-500 dark:text-custom-500">You are Logged Out</h4>
                 <p class="mb-8 text-slate-500 dark:text-zink-200">Thank you for using {{ env('APP_NAME') }} admin template
                 </p>

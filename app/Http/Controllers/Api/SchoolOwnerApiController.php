@@ -35,6 +35,59 @@ class SchoolOwnerApiController extends Controller
 // class DriverApiController extends PushNotificationController
 {
 
+    public function DriverAssigncheck(Request $request)
+    {
+    try {
+        $request->validate([
+            'total_session' => 'required|integer|min:1',
+            'driver_id' => 'required',
+            'SchoolId' => 'required|integer',
+            'Schedule_date' => 'required|date',
+            'fromtime' => 'required',
+            'Totime' => 'required',
+        ]);
+
+        $fromTime  = Carbon::parse($request->fromtime)->format('H:i:s');
+        $toTime    = Carbon::parse($request->Totime)->format('H:i:s');
+
+        $startdate = $request->Schedule_date;
+        $endDate   = Carbon::parse($startdate)
+                        ->addDays($request->total_session)
+                        ->format('Y-m-d');
+
+        // Overlap logic: (existing.from < new.to) && (existing.to > new.from)
+        $alreadyBooked = Schedule::where('driver_id', $request->driver_id)
+            ->where('SchoolId', $request->SchoolId)
+            ->whereBetween('Schedule_date', [$startdate, $endDate])
+            ->where(function ($query) use ($fromTime, $toTime) {
+                $query->whereTime('fromtime', '<', $toTime)
+                      ->whereTime('Totime', '>', $fromTime);
+            })
+            ->exists();
+
+        if ($alreadyBooked) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Driver Already Assigned for selected time/date.',
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Driver available",
+        ], 200);
+
+    } catch (\Throwable $th) {
+
+        Log::error('Error checking schedule availability: ' . $th->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'error' => $th->getMessage(),
+        ], 500);
+    }
+}
+
     public function statelist(Request $request)
     {
         try {
@@ -958,12 +1011,12 @@ class SchoolOwnerApiController extends Controller
             'SchoolId' => 'required',
         ]);
         try {
-            $assignedDrivers = Schedule::whereNotNull('driver_id')
-                ->pluck('driver_id')
-                ->toArray();
+            // $assignedDrivers = Schedule::whereNotNull('driver_id')
+            //     ->pluck('driver_id')
+            //     ->toArray();
             $unassignedDrivers = DrivingSchool::where('is_login', 2)
                 ->where('driver_schoolid', $request->SchoolId)
-                ->whereNotIn('SchoolId', $assignedDrivers) // Filter out assigned drivers
+                // ->whereNotIn('SchoolId', $assignedDrivers) // Filter out assigned drivers
                 ->select('SchoolId', 'name')
                 ->get();
 
