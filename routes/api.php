@@ -49,6 +49,7 @@ Route::post('/schoolowner/schedule_pending_session', [SchoolOwnerApiController::
 Route::post('/schoolowner/MarkAscomplete', [SchoolOwnerApiController::class, 'MarkAscomplete'])->name('MarkAscomplete');
 Route::post('/schoolowner/cancelorder', [SchoolOwnerApiController::class, 'cancelorder'])->name('cancelorder');
 Route::post('/schoolowner/completeorder', [SchoolOwnerApiController::class, 'completeorder'])->name('completeorder');
+Route::post('/schoolowner/Driverchange', [SchoolOwnerApiController::class, 'Driverchange'])->name('Driverchange');
 
 //customer api
 Route::post('/customer-registration', [CustomerController::class, 'customer_new_registration'])->name('customer_new_registration');
