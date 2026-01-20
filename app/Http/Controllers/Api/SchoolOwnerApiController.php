@@ -954,7 +954,7 @@ class SchoolOwnerApiController extends Controller
                 ->whereIn('is_schedule', [0])
                 ->whereIn('isPayment', [0,1])
                 ->get();
-            //dd($myorders);
+            
             $myorder = [];
             foreach ($myorders as $myor) {
                 $totalAmount = $myor->iNetAmount ?? 0;
@@ -967,6 +967,7 @@ class SchoolOwnerApiController extends Controller
                 $myorder[] = [
                     "customer_name" => $myor->customer_name,
                     "start_date" => $myor->start_date,
+                    "created_at" => date('d-m-Y', strtotime($myor->created_at)),
                     "customer_id" => $myor->customer_id,
                     "package_order_id" => $myor->package_order_id,
                     "customer_phone" => $myor->customer_phone,
@@ -1090,12 +1091,15 @@ class SchoolOwnerApiController extends Controller
             'SchoolId' => 'required'
         ]);
         try {
-            $ongoingorders = Packageorder::with('carname', 'package', 'schedulemaster')
+            $ongoingorders = Packageorder::with('carname', 'package', 'schedulemaster','scheduledetail.drivername')
                 ->where('SchoolId', $request->SchoolId)
                 ->whereIn('is_schedule', [1])
                 ->get();
+
             $ongoingorder = [];
             foreach ($ongoingorders as $myor) {
+                $driver = optional($myor->scheduledetail->first())->drivername;
+                $schedule = $myor->scheduledetail->first();
                 $package = $myor->package->first();
                 $totalsession = $package->session;
                 $consumesession = Schedule::where('package_order_id', $myor->package_order_id)
@@ -1105,6 +1109,7 @@ class SchoolOwnerApiController extends Controller
                 $ongoingorder[] = [
                     "customer_name" => $myor->customer_name,
                     "start_date" => $myor->start_date,
+                    "booking_date" => optional($myor->created_at)->format('d-m-Y'),
                     "package_order_id" => $myor->package_order_id,
                     "customer_phone" => $myor->customer_phone,
                     "pickup_drop" => $myor->pickup_drop ?: '',
@@ -1119,7 +1124,12 @@ class SchoolOwnerApiController extends Controller
                     "Total session" => $totalsession,
                     "Consume session" => $consumesession,
                     "Remain session" => $available,
-
+                    "driver_id"   => $driver->SchoolId ?? '',
+                    "driver_name"   => $driver->name ?? '',
+                    "driver_email"  => $driver->email ?? '',
+                    "driver_mobile" => $driver->mobile_number ?? '',
+                    "schedule_date" => $schedule->Schedule_date ?? '',
+                    "schedule_id" => $schedule->Schedule_id ?? '',
 
                 ];
             }
@@ -1139,6 +1149,29 @@ class SchoolOwnerApiController extends Controller
         } catch (\Throwable $th) {
             return response()->json(['error' => $th->getMessage()], 500);
         }
+    }
+    
+    public function Driverchange(Request $request)
+    {
+        $request->validate([
+            'schedule_id' => 'required|exists:Schedule,Schedule_id',
+            'driver_id'   => 'required|exists:drivingschool,SchoolId',
+        ]);
+
+        $updated = Schedule::where('Schedule_id', $request->schedule_id)
+            ->update(['driver_id' => $request->driver_id]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Schedule not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Driver changed successfully',
+        ]);
     }
 
     public function schedule_pending_session(Request $request)

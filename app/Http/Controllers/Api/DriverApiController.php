@@ -61,6 +61,10 @@ class DriverApiController extends Controller
                 $data[] = [
                     "Schedule_id" => $driverride->Schedule_id,
                     "package_order_id" => $packageOrder?->package_order_id ?? '',
+                    "start_date" => $packageOrder?->start_date ?? '',
+                    "created_at" => $packageOrder?->created_at
+                        ? date('d-m-Y', strtotime($packageOrder->created_at))
+                        : '',
                     "customer_id" => $packageOrder?->customer_id ?? '',
                     "customer_name" => $packageOrder?->customer_name ?? '',
                     "customer_phone" => $packageOrder?->customer_phone ?? '',
